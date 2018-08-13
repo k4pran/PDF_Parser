@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Text;
-using iTextSharp.text;
 
 namespace PrickleParser{
-    public class WordMetric : IComparable<WordMetric> {
+    public class WordMetrics : IComparable<WordMetrics> {
         private StringBuilder word;
         private StringBuilder styledAndDecoratedWord;
         private StringBuilder decoratedWord;
         private StringBuilder styledWord;
+        
         private bool bold;
         private bool italic;
+        private Color fillColor;
+        private Color strokeColor;
         private string fontFamily;
+        
         private Vector3D topLeft;
         private Vector3D topRight;
         private Vector3D bottomLeft;
@@ -22,8 +25,8 @@ namespace PrickleParser{
 
         private int pageNb;
         private int lineNb;
-
-        public WordMetric(){
+        
+        public WordMetrics(){
             this.word = new StringBuilder();
             this.bold = false;
             this.italic = false;
@@ -107,7 +110,7 @@ namespace PrickleParser{
         }
 
         public Rect GetRect(){
-            return new Rect(bottomLeft, bottomRight, bottomLeft, bottomRight);
+            return new Rect(bottomLeft, bottomRight, topLeft, topRight);
         }
 
         public float GetFontSize(){
@@ -122,6 +125,16 @@ namespace PrickleParser{
         public bool Italic{
             get => italic;
             set => italic = value;
+        }
+
+        public Color FillColor{
+            get => fillColor;
+            set => fillColor = value;
+        }
+
+        public Color StrokeColor{
+            get => strokeColor;
+            set => strokeColor = value;
         }
 
         public string FontFamily{
@@ -164,7 +177,7 @@ namespace PrickleParser{
             set => baseline = value;
         }
         
-        public int CompareTo(WordMetric other){
+        public int CompareTo(WordMetrics other){
             if (other == null || other.topLeft == null || other.bottomRight == null ||
                 this.topLeft == null || this.bottomRight == null){
                 throw new Exception("Invalid comparison"); // todo
