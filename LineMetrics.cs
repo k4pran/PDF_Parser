@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using iTextSharp.text;
 
 namespace PrickleParser{
     public class LineMetrics{
@@ -8,24 +7,24 @@ namespace PrickleParser{
         private float descent;
         private float lineLineSpacingAbove;
         private float lineLineSpacingBelow;
-        private List<WordMetric> words;
+        private List<WordMetrics> words;
 
         public LineMetrics(float ascent, float baseline, float descent){
-            this.words = new List<WordMetric>();
+            this.words = new List<WordMetrics>();
             this.ascent = ascent;
             this.baseline = baseline;
             this.descent = descent;
         }
 
-        public void AddWords(List<WordMetric> words){
+        public void AddWords(List<WordMetrics> words){
             this.words.AddRange(words);
         }
 
-        public void AddWord(WordMetric word){
+        public void AddWord(WordMetrics word){
             this.words.Add(word);
         }
 
-        public List<WordMetric> Words => words;
+        public List<WordMetrics> Words => words;
 
         public float Ascent{
             get => ascent;
