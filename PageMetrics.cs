@@ -1,48 +1,45 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using iTextSharp.text;
-using iTextSharp.text.pdf.parser;
 
 namespace PrickleParser{
-    public class PdfPageMetrics{
+    public class PageMetrics{
 
+        private int pageNumber;
         private List<LineMetrics> lines;
-        private List<WordMetric> words;
+        private List<WordMetrics> words;
         private string text;
+        private float width;
+        private float height;
+        private float rotation;
         private float avgLineSpacing;
 
-        public PdfPageMetrics(){
+        public PageMetrics(int pageNumber){
+            this.pageNumber = pageNumber;
             this.lines = new List<LineMetrics>();
-            this.words = new List<WordMetric>();
+            this.words = new List<WordMetrics>();
             this.text = "";
         }
 
-        public void AddWord(WordMetric word){
+        public void AddWord(WordMetrics word){
             words.Add(word);
         }
 
-        public string Text{
-            get => text;
-            set => text = value;
-        }
-
         public void BuildLines(){
-            IDictionary<LineMetrics, List<WordMetric>> lineMappings = new Dictionary<LineMetrics, List<WordMetric>>();
-            foreach(WordMetric wordMetric in words){
+            IDictionary<LineMetrics, List<WordMetrics>> lineMappings = new Dictionary<LineMetrics, List<WordMetrics>>();
+            foreach(WordMetrics wordMetric in words){
                 LineMetrics line = new LineMetrics(wordMetric.Ascent, wordMetric.Baseline, wordMetric.Descent);
                 if (lineMappings.ContainsKey(line)){
                     lineMappings[line].Add(wordMetric);
                     
                 }
                 else{
-                    lineMappings.Add(line, new List<WordMetric>{wordMetric});
+                    lineMappings.Add(line, new List<WordMetrics>{wordMetric});
                 }
             }
 
-            foreach(KeyValuePair<LineMetrics, List<WordMetric>> entry in lineMappings){
+            foreach(KeyValuePair<LineMetrics, List<WordMetrics>> entry in lineMappings){
                 entry.Key.AddWords(entry.Value);
                 lines.Add(entry.Key);
             }
@@ -57,7 +54,7 @@ namespace PrickleParser{
             if (lines.Count == 1){
                 avgLineSpacing = -1;
                 lines[0].LineSpacingAbove = -1;
-                lines[1].LineSpacingBelow = -1;
+                lines[0].LineSpacingBelow = -1;
                 return;
             }
             
@@ -84,12 +81,47 @@ namespace PrickleParser{
         public void PrintLines(){
             foreach(LineMetrics line in lines){
                 StringBuilder sb = new StringBuilder();
-                foreach(WordMetric wordMetric in line.Words){
+                foreach(WordMetrics wordMetric in line.Words){
                     sb.Append(wordMetric.Word);
                     sb.Append(" ");
                 }
                 Console.WriteLine(sb.ToString());
             }
+        }
+
+        public int PageNumber{
+            get => pageNumber;
+            set => pageNumber = value;
+        }
+        
+        public string Text{
+            get => text;
+            set => text = value;
+        }
+
+        public List<LineMetrics> Lines{
+            get => lines;
+            set => lines = value;
+        }
+
+        public List<WordMetrics> Words{
+            get => words;
+            set => words = value;
+        }
+
+        public float Width{
+            get => width;
+            set => width = value;
+        }
+
+        public float Height{
+            get => height;
+            set => height = value;
+        }
+
+        public float Rotation{
+            get => rotation;
+            set => rotation = value;
         }
     }
 }
