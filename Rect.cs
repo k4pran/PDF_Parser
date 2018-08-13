@@ -1,4 +1,4 @@
-﻿using iTextSharp.text.pdf.parser;
+﻿using iText.Kernel.Geom;
 
 namespace PrickleParser{
     public class Rect{
@@ -9,11 +9,15 @@ namespace PrickleParser{
         private float width;
         private float height;
 
-        public Rect(Vector3D topLeft, Vector3D topRight, Vector3D bottomLeft, Vector3D bottomRight){
-            this.topLeft = topLeft;
-            this.topRight = topRight;
+        public Rect(Vector3D bottomLeft, Vector3D bottomRight, Vector3D topLeft, Vector3D topRight){
             this.bottomLeft = bottomLeft;
             this.bottomRight = bottomRight;
+            this.topLeft = topLeft;
+            this.topRight = topRight;
+        }
+
+        public Rectangle ToITextRectangle(){
+            return new Rectangle(bottomLeft.X, bottomLeft.Y, topRight.X, topRight.Y);
         }
         
         public float Width{
@@ -37,9 +41,9 @@ namespace PrickleParser{
         }
 
         public Vector3D(Vector v){
-            this.x = v[Vector.I1];
-            this.y = v[Vector.I2];
-            this.z = v[Vector.I3];
+            this.x = v.Get(Vector.I1);
+            this.y = v.Get(Vector.I2);
+            this.z = v.Get(Vector.I3);
         }
 
         public float X => x;
