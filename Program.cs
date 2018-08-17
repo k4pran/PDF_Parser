@@ -1,45 +1,25 @@
-﻿using System;
-using System.Text;
-using iText.Kernel.Geom;
-using iText.Kernel.Pdf;
-using iText.Kernel.Pdf.Canvas.Parser;
+﻿using Path = System.IO.Path;
 
 namespace PrickleParser{
     internal class Program{
         public static void Main(string[] args){
-            PdfDocument pdfDoc = new PdfDocument(
-                new PdfReader("/Users/ryan/RiderProjects/IText Play/IText Play/Assets/Artificial Intelligence A Modern Approach.pdf"), 
-                new PdfWriter("/Users/ryan/RiderProjects/IText Play/IText Play/Assets/cleaned.pdf"));
-
-
-            EncodingProvider codePages = CodePagesEncodingProvider.Instance;
-            Encoding.RegisterProvider(codePages);
+                                                
+            // Extract pdf content
+            ContentExtract.ExtractPdf(
+                "/Users/ryan/RiderProjects/Sharpen Pdf Parser/Sharpen Pdf Parser/Resources/affordances.pdf",
+                Path.Combine(Path.GetTempPath(), "test.pdf"));
+            BookMetrics book = ContentExtract.Book;
             
-            pdfDoc.GetNumberOfPages();
+            // Remove text from pdf
+            GhostScript.RemoveText("/Users/ryan/Documents/Books/affordances.pdf");
             
-            BookMetrics bookMetrics = new BookMetrics();
-            bookMetrics.Author = pdfDoc.GetDocumentInfo().GetAuthor();
-            bookMetrics.Title = pdfDoc.GetDocumentInfo().GetTitle();
-            bookMetrics.Publisher = pdfDoc.GetDocumentInfo().GetProducer();
-
-            bookMetrics.NbPages = pdfDoc.GetNumberOfPages();
+            // Convert page to svg
+            Poppler.PdfToSvg("/Users/ryan/Documents/Books/affordances.pdf", "1");
             
-            for(int i = 0; i < bookMetrics.NbPages; i++){
-                Rectangle size = pdfDoc.GetPage(i + 1).GetPageSize();
-                
-                PageMetrics pdfPageMetrics = new PageMetrics(i + 1);
-                pdfPageMetrics.Width = size.GetWidth();
-                pdfPageMetrics.Height = size.GetHeight();
-                pdfPageMetrics.Rotation = pdfDoc.GetPage(i + 1).GetRotation(); 
-
-                DeepExtractionStrategy strategy = new DeepExtractionStrategy(ref pdfPageMetrics);
-                Console.WriteLine("Processing page {0}", i + 1);
-                pdfPageMetrics.Text = PdfTextExtractor.GetTextFromPage(pdfDoc.GetPage(i + 1), strategy);
-                pdfPageMetrics.BuildLines();
-                pdfPageMetrics.DetermineLineSpacing();
-            }    
-            
-            pdfDoc.Close();
+            // Preparing SVG for unity - temporary until they fix issues
+            Svg.RenderEmptyPathsExplicit("/Users/ryan/RiderProjects/Sharpen Pdf Parser/Sharpen Pdf Parser/Resources/test.svg");
+            Svg.RenderRgbAsHex("/Users/ryan/RiderProjects/Sharpen Pdf Parser/Sharpen Pdf Parser/Resources/test.svg");
+            Svg.WriteSvg("/Users/ryan/Documents/Books/parsed2.svg");
         }
     }
 }
