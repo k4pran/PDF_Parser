@@ -24,21 +24,22 @@ namespace PrickleParser{
             book.Title = pdfDoc.GetDocumentInfo().GetTitle();
             book.Publisher = pdfDoc.GetDocumentInfo().GetProducer();
 
-            book.NbPages = pdfDoc.GetNumberOfPages();
+            int nbPages = pdfDoc.GetNumberOfPages();
             
-            for(int i = 0; i < book.NbPages; i++){
+            for(int i = 0; i < nbPages; i++){
                 Rectangle size = pdfDoc.GetPage(i + 1).GetPageSize();
                 
-                PageMetrics pdfPageMetrics = new PageMetrics(i + 1);
-                pdfPageMetrics.Width = size.GetWidth();
-                pdfPageMetrics.Height = size.GetHeight();
-                pdfPageMetrics.Rotation = pdfDoc.GetPage(i + 1).GetRotation(); 
+                PageMetrics page = new PageMetrics(i + 1);
+                page.Width = size.GetWidth();
+                page.Height = size.GetHeight();
+                page.Rotation = pdfDoc.GetPage(i + 1).GetRotation(); 
 
-                DeepExtractionStrategy strategy = new DeepExtractionStrategy(ref pdfPageMetrics);
+                DeepExtractionStrategy strategy = new DeepExtractionStrategy(ref page);
                 Console.WriteLine("Processing page {0}", i + 1);
-                pdfPageMetrics.Text = PdfTextExtractor.GetTextFromPage(pdfDoc.GetPage(i + 1), strategy);
-                pdfPageMetrics.BuildLines();
-                pdfPageMetrics.DetermineLineSpacing();
+                page.Text = PdfTextExtractor.GetTextFromPage(pdfDoc.GetPage(i + 1), strategy);
+                page.BuildLines();
+                page.DetermineLineSpacing();
+                book.AddPage(page);
             }    
             pdfDoc.Close();
         }

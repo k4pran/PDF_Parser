@@ -1,4 +1,5 @@
 ﻿using iText.Kernel.Geom;
+using Newtonsoft.Json;
 
 namespace PrickleParser{
     public class Rect{
@@ -34,6 +35,7 @@ namespace PrickleParser{
         private float y;
         private float z;
 
+        [JsonConstructor]
         public Vector3D(float x, float y, float z){
             this.x = x;
             this.y = y;
@@ -41,9 +43,9 @@ namespace PrickleParser{
         }
 
         public Vector3D(Vector v){
-            this.x = v.Get(Vector.I1);
-            this.y = v.Get(Vector.I2);
-            this.z = v.Get(Vector.I3);
+            x = v.Get(Vector.I1);
+            y = v.Get(Vector.I2);
+            z = v.Get(Vector.I3);
         }
 
         public float X => x;

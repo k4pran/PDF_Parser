@@ -9,7 +9,9 @@ namespace PrickleParser{
                 "/Users/ryan/RiderProjects/Sharpen Pdf Parser/Sharpen Pdf Parser/Resources/affordances.pdf",
                 Path.Combine(Path.GetTempPath(), "test.pdf"));
             BookMetrics book = ContentExtract.Book;
+            book.ToJson("/Users/ryan/RiderProjects/Sharpen Pdf Parser/test.json");
             
+            BookMetrics bookTest = BookMetrics.FromJson("/Users/ryan/RiderProjects/Sharpen Pdf Parser/test.json");
             // Remove text from pdf
             GhostScript.RemoveText("/Users/ryan/Documents/Books/affordances.pdf");
             
