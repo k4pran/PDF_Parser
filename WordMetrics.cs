@@ -28,23 +28,23 @@ namespace PrickleParser{
         private int lineNb;
         
         public WordMetrics(){
-            this.word = new StringBuilder();
-            this.bold = false;
-            this.italic = false;
+            word = new StringBuilder();
+            bold = false;
+            italic = false;
 
-            this.ascent = -1;
-            this.descent = -1;
-            this.topRight = null;
-            this.topLeft = null;
-            this.bottomLeft = null;
-            this.bottomRight = null;
-            this.baseline = -1; // todo check for unset variables during get
+            ascent = -1;
+            descent = -1;
+            topRight = null;
+            topLeft = null;
+            bottomLeft = null;
+            bottomRight = null;
+            baseline = -1; // todo check for unset variables during get
 
-            this.rect = null;
+            rect = null;
         }
 
         public void Append(string s){
-            this.word.Append(s);
+            word.Append(s);
         }
 
         public StringBuilder Word{
@@ -95,7 +95,7 @@ namespace PrickleParser{
 
         public StringBuilder StyleAndDecorateWord(){
             if (styledAndDecoratedWord != null){
-                return this.styledAndDecoratedWord;
+                return styledAndDecoratedWord;
             }
             styledAndDecoratedWord = new StringBuilder();
             styledWord.AppendFormat("<span style=\"font-family:{0};font-size:{1}\">", fontFamily, GetFontSize());
@@ -185,21 +185,21 @@ namespace PrickleParser{
 
         public int CompareTo(WordMetrics other){
             if (other == null || other.topLeft == null || other.bottomRight == null ||
-                this.topLeft == null || this.bottomRight == null){
+                topLeft == null || bottomRight == null){
                 throw new Exception("Invalid comparison"); // todo
             }
 
-            if (this.baseline > other.baseline){
+            if (baseline > other.baseline){
                 return -1;
             }
-            else if (this.baseline < other.baseline){
+            else if (baseline < other.baseline){
                 return 1;
             }
             else{
-                if (this.BottomLeft.X < other.bottomLeft.X){
+                if (BottomLeft.X < other.bottomLeft.X){
                     return -1;
                 }
-                else if (this.bottomLeft.X > other.bottomLeft.X){
+                else if (bottomLeft.X > other.bottomLeft.X){
                     return 1;
                 }
             }
