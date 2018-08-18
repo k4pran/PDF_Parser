@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security;
 using Newtonsoft.Json;
+using UnityEngine;
+using Formatting = System.Xml.Formatting;
 
 namespace PrickleParser{
     
@@ -31,7 +33,7 @@ namespace PrickleParser{
 
         public void ToJson(string output){
             try{
-                File.WriteAllText(output, JsonConvert.SerializeObject(this, Formatting.Indented));
+                File.WriteAllText(output, JsonConvert.SerializeObject(this, Newtonsoft.Json.Formatting.Indented));
             }
             catch(Exception e){
                 if (e is UnauthorizedAccessException || e is SecurityException){
@@ -72,28 +74,32 @@ namespace PrickleParser{
             throw new Exception("Input file not found at path: " + input);
         }
 
-        public List<PageMetrics> Pages => pages;
+        public List<PageMetrics> Pages{
+            get{ return pages; }
+        }
 
-        public int NbPages => nbPages;
+        public int NbPages{
+            get{ return nbPages; }
+        }
 
         public string Author{
-            get => author;
-            set => author = value;
+            get{ return author; }
+            set{ author = value; }
         }
 
         public string Title{
-            get => title;
-            set => title = value;
+            get{ return title; }
+            set{ title = value; }
         }
 
         public string Date{
-            get => date;
-            set => date = value;
+            get{ return date; }
+            set{ date = value; }
         }
 
         public string Publisher{
-            get => publisher;
-            set => publisher = value;
+            get{ return publisher; }
+            set{ publisher = value; }
         }
     }
 }

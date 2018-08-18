@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace PrickleParser{
@@ -58,7 +57,7 @@ namespace PrickleParser{
                 return;
             }
             
-            float[] spacings = {};
+            List<float> spacings = new List<float>();
 
             float lastDescent = lines[0].Descent;
             lines[0].LineSpacingAbove = -1;
@@ -67,15 +66,15 @@ namespace PrickleParser{
                 lines[i].LineSpacingAbove = spacing;
                 lines[i - 1].LineSpacingBelow = spacing;
                 lastDescent = lines[i].Descent;
-                spacings.Append(spacing);
+                spacings.Add(spacing); // todo avg vs max spacing?
             }
             lines[lines.Count - 1].LineSpacingBelow = -1;
 
             float sum = 0f;
-            for(int i = 0; i < spacings.Length; i++){
+            for(int i = 0; i < spacings.Count; i++){
                 sum += spacings[i];
             }
-            avgLineSpacing = sum / spacings.Length;
+            avgLineSpacing = sum / spacings.Count;
         }
 
         public void PrintLines(){
@@ -90,38 +89,32 @@ namespace PrickleParser{
         }
 
         public int PageNumber{
-            get => pageNumber;
-            set => pageNumber = value;
+            get{ return pageNumber; }
         }
-        
+
         public string Text{
-            get => text;
-            set => text = value;
-        }
-
-        public List<LineMetrics> Lines{
-            get => lines;
-            set => lines = value;
-        }
-
-        public List<WordMetrics> Words{
-            get => words;
-            set => words = value;
+            get{ return text; }
+            set{ text = value; }
         }
 
         public float Width{
-            get => width;
-            set => width = value;
+            get{ return width; }
+            set{ width = value; }
         }
 
         public float Height{
-            get => height;
-            set => height = value;
+            get{ return height; }
+            set{ height = value; }
         }
 
         public float Rotation{
-            get => rotation;
-            set => rotation = value;
+            get{ return rotation; }
+            set{ rotation = value; }
+        }
+
+        public float AvgLineSpacing{
+            get{ return avgLineSpacing; }
+            set{ avgLineSpacing = value; }
         }
     }
 }

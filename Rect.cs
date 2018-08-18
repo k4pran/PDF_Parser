@@ -1,5 +1,4 @@
-﻿using iText.Kernel.Geom;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace PrickleParser{
     public class Rect{
@@ -17,16 +16,12 @@ namespace PrickleParser{
             this.topRight = topRight;
         }
 
-        public Rectangle ToITextRectangle(){
-            return new Rectangle(bottomLeft.X, bottomLeft.Y, topRight.X, topRight.Y);
-        }
-        
         public float Width{
-            get => (topRight.X - topLeft.X);
+            get{ return width; }
         }
 
         public float Height{
-            get => (topLeft.Y - bottomLeft.Y);
+            get{ return height; }
         }
     }
 
@@ -42,16 +37,16 @@ namespace PrickleParser{
             this.z = z;
         }
 
-        public Vector3D(Vector v){
-            x = v.Get(Vector.I1);
-            y = v.Get(Vector.I2);
-            z = v.Get(Vector.I3);
+        public float X{
+            get{ return x; }
         }
 
-        public float X => x;
+        public float Y{
+            get{ return y; }
+        }
 
-        public float Y => y;
-
-        public float Z => z;
+        public float Z{
+            get{ return z; }
+        }
     }
 }

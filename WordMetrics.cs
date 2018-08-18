@@ -43,15 +43,6 @@ namespace PrickleParser{
             rect = null;
         }
 
-        public void Append(string s){
-            word.Append(s);
-        }
-
-        public StringBuilder Word{
-            get => word;
-            set => word = value;
-        }
-
         public StringBuilder DecorateWord(){
 
             if (decoratedWord != null){
@@ -95,7 +86,7 @@ namespace PrickleParser{
 
         public StringBuilder StyleAndDecorateWord(){
             if (styledAndDecoratedWord != null){
-                return styledAndDecoratedWord;
+                return this.styledAndDecoratedWord;
             }
             styledAndDecoratedWord = new StringBuilder();
             styledWord.AppendFormat("<span style=\"font-family:{0};font-size:{1}\">", fontFamily, GetFontSize());
@@ -118,88 +109,87 @@ namespace PrickleParser{
             return ascent - descent;
         }
 
+        public string Word{
+            get{ return word.ToString(); }
+        }
+
         public bool Bold{
-            get => bold;
-            set => bold = value;
+            get{ return bold; }
+            set{ bold = value; }
         }
 
         public bool Italic{
-            get => italic;
-            set => italic = value;
+            get{ return italic; }
+            set{ italic = value; }
         }
 
         public Color FillColor{
-            get => fillColor;
-            set => fillColor = value;
+            get{ return fillColor; }
+            set{ fillColor = value; }
         }
 
         public Color StrokeColor{
-            get => strokeColor;
-            set => strokeColor = value;
+            get{ return strokeColor; }
+            set{ strokeColor = value; }
         }
 
         public string FontFamily{
-            get => fontFamily;
-            set => fontFamily = value;
+            get{ return fontFamily; }
+            set{ fontFamily = value; }
         }
 
         public Vector3D TopLeft{
-            get => topLeft;
-            set => topLeft = value;
+            get{ return topLeft; }
+            set{ topLeft = value; }
         }
 
         public Vector3D TopRight{
-            get => topRight;
-            set => topRight = value;
+            get{ return topRight; }
+            set{ topRight = value; }
         }
 
         public Vector3D BottomLeft{
-            get => bottomLeft;
-            set => bottomLeft = value;
+            get{ return bottomLeft; }
+            set{ bottomLeft = value; }
         }
 
         public Vector3D BottomRight{
-            get => bottomRight;
-            set => bottomRight = value;
+            get{ return bottomRight; }
+            set{ bottomRight = value; }
         }
 
         public float Ascent{
-            get => ascent;
-            set => ascent = value;
+            get{ return ascent; }
+            set{ ascent = value; }
         }
 
         public float Descent{
-            get => descent;
-            set => descent = value;
+            get{ return descent; }
+            set{ descent = value; }
         }
 
         public float Baseline{
-            get => baseline;
-            set => baseline = value;
-        }
-
-        public float SingleWhiteSpaceWidth{
-            get => singleWhiteSpaceWidth;
-            set => singleWhiteSpaceWidth = value;
+            get{ return baseline; }
+            set{ baseline = value; }
         }
 
         public int CompareTo(WordMetrics other){
             if (other == null || other.topLeft == null || other.bottomRight == null ||
-                topLeft == null || bottomRight == null){
+                this.topLeft == null || this.bottomRight == null){
                 throw new Exception("Invalid comparison"); // todo
             }
 
-            if (baseline > other.baseline){
+            if (this.baseline > other.baseline){
                 return -1;
             }
-            else if (baseline < other.baseline){
+            else if (this.baseline < other.baseline){
                 return 1;
             }
             else{
-                if (BottomLeft.X < other.bottomLeft.X){
+                if (this.BottomLeft.X < other.bottomLeft.X){
                     return -1;
                 }
-                else if (bottomLeft.X > other.bottomLeft.X){
+                else if (this.bottomLeft.X > other.bottomLeft.X){
                     return 1;
                 }
             }

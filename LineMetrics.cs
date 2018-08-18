@@ -5,8 +5,8 @@ namespace PrickleParser{
         private float ascent;
         private float baseline;
         private float descent;
-        private float lineLineSpacingAbove;
-        private float lineLineSpacingBelow;
+        private float lineSpacingAbove;
+        private float lineSpacingBelow;
         private List<WordMetrics> words;
 
         public LineMetrics(float ascent, float baseline, float descent){
@@ -24,31 +24,33 @@ namespace PrickleParser{
             this.words.Add(word);
         }
 
-        public List<WordMetrics> Words => words;
+        public List<WordMetrics> Words{
+            get{ return words; }
+        }
 
         public float Ascent{
-            get => ascent;
-            set => ascent = value;
+            get{ return ascent; }
+            set{ ascent = value; }
         }
 
         public float Baseline{
-            get => baseline;
-            set => baseline = value;
+            get{ return baseline; }
+            set{ baseline = value; }
         }
 
         public float Descent{
-            get => descent;
-            set => descent = value;
+            get{ return descent; }
+            set{ descent = value; }
         }
 
         public float LineSpacingAbove{
-            get => lineLineSpacingAbove;
-            set => lineLineSpacingAbove = value;
+            get{ return lineSpacingAbove; }
+            set{ lineSpacingAbove = value; }
         }
 
         public float LineSpacingBelow{
-            get => lineLineSpacingBelow;
-            set => lineLineSpacingBelow = value;
+            get{ return lineSpacingBelow; }
+            set{ lineSpacingBelow = value; }
         }
 
         public override bool Equals(object obj){

@@ -17,46 +17,48 @@
             this.height = height;
         }
 
-        public byte[] ImageBytes => imageBytes;
+        public byte[] ImageBytes{
+            get{ return imageBytes; }
+        }
 
         public string ImageRef{
-            get => imageRef;
-            set => imageRef = value;
+            get{ return imageRef; }
+            set{ imageRef = value; }
         }
 
         public string ImageType{
-            get => imageType;
-            set => imageType = value;
+            get{ return imageType; }
+            set{ imageType = value; }
         }
 
         public Vector3D TopRight{
-            get => topRight;
-            set => topRight = value;
+            get{ return topRight; }
+            set{ topRight = value; }
         }
 
         public Vector3D TopLeft{
-            get => topLeft;
-            set => topLeft = value;
+            get{ return topLeft; }
+            set{ topLeft = value; }
         }
 
         public Vector3D BottomLeft{
-            get => bottomLeft;
-            set => bottomLeft = value;
+            get{ return bottomLeft; }
+            set{ bottomLeft = value; }
         }
 
         public Vector3D BottomRight{
-            get => bottomRight;
-            set => bottomRight = value;
+            get{ return bottomRight; }
+            set{ bottomRight = value; }
         }
 
         public float Width{
-            get => width;
-            set => width = value;
+            get{ return width; }
+            set{ width = value; }
         }
 
         public float Height{
-            get => height;
-            set => height = value;
+            get{ return height; }
+            set{ height = value; }
         }
     }
 }
