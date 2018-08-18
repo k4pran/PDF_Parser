@@ -1,26 +1,28 @@
-﻿namespace PrickleParser{
+﻿using Newtonsoft.Json;
+
+namespace PrickleParser{
     public class Color{
         private int MAX_VALUE = 255;
         private ColorFormat colorFormat;
 
-        private int graylevel;
+        private float graylevel;
         
-        private int red;
-        private int green;
-        private int blue;
-        private int alpha;
+        private float red;
+        private float green;
+        private float blue;
+        private float alpha;
         
-        private enum ColorFormat{
+        public enum ColorFormat{
             grayscale = 0,
             rgb       = 1
         }
 
-        public Color(int graylevel){
+        public Color(float graylevel){
             this.graylevel = graylevel;
             this.colorFormat = ColorFormat.grayscale;
         }
 
-        public Color(int red, int green, int blue, int alpha){
+        public Color(float red, float green, float blue, float alpha){
             this.red = red;
             this.green = green;
             this.blue = blue;
@@ -28,11 +30,21 @@
             this.colorFormat = ColorFormat.rgb;
         }
         
-        public Color(int red, int green, int blue){
+        public Color(float red, float green, float blue){
             this.red = red;
             this.green = green;
             this.blue = blue;
             this.alpha = MAX_VALUE;
+        }
+
+        [JsonConstructor]
+        public Color(ColorFormat colorFormat, float graylevel, float red, float green, float blue, float alpha){
+            this.colorFormat = colorFormat;
+            this.graylevel = graylevel;
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+            this.alpha = alpha;
         }
     }
 }
