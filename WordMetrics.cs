@@ -22,6 +22,7 @@ namespace PrickleParser{
         private float descent;
         private float baseline;
         private Rect rect;
+        private float singleWhiteSpaceWidth;
 
         private int pageNb;
         private int lineNb;
@@ -176,7 +177,12 @@ namespace PrickleParser{
             get => baseline;
             set => baseline = value;
         }
-        
+
+        public float SingleWhiteSpaceWidth{
+            get => singleWhiteSpaceWidth;
+            set => singleWhiteSpaceWidth = value;
+        }
+
         public int CompareTo(WordMetrics other){
             if (other == null || other.topLeft == null || other.bottomRight == null ||
                 this.topLeft == null || this.bottomRight == null){

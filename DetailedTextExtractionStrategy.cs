@@ -78,7 +78,6 @@ namespace PrickleParser{
         public virtual void RenderText(TextRenderInfo renderInfo) {
             bool flagNoText = result.Length == 0;
             bool flagNewLine = false;
-
             if (flagNoText && renderInfo.GetText().Length > 0){
                 StartNewWord(renderInfo);
             }
@@ -116,8 +115,8 @@ namespace PrickleParser{
                         
             if (currWord.StrokeColor == null && renderInfo.GetStrokeColor() != null){
                 currWord.StrokeColor = ProcessColorInfo(renderInfo.GetStrokeColor());
-            }              
-
+            }    
+            
             if (!flagNoText){
                 Vector v = bottomLeft;
                 if ((lastBottomRight.Subtract(lastBottomLeft).Cross(lastBottomLeft.Subtract(v)).LengthSquared()) / (lastBottomRight.Subtract(lastBottomLeft).LengthSquared()) > 1.0){
@@ -127,14 +126,14 @@ namespace PrickleParser{
 
 
             if (flagNewLine){
-                this.AppendTextChunk('\n');
+                AppendTextChunk('\n');
                 flagNewWord = true;
                 StartNewWord(renderInfo);
             }
-            else if (!flagNoText && this.result[this.result.Length - 1] != ' ' &&
+            else if (!flagNoText && result[result.Length - 1] == ' ' &&
                      (renderInfo.GetText().Length > 0 && renderInfo.GetText()[0] != ' ') &&
                      lastBottomRight.Subtract(bottomLeft).Length() > renderInfo.GetSingleSpaceWidth() / 2.0){
-                this.AppendTextChunk(' ');
+                AppendTextChunk(' ');
                 StartNewWord(renderInfo);
             }
             
@@ -154,9 +153,9 @@ namespace PrickleParser{
             }
                 
             if (color.GetNumberOfComponents() == 3){
-                return new Color((int) color.GetColorValue()[0], 
-                    (int) color.GetColorValue()[1], 
-                    (int) color.GetColorValue()[2]);
+                return new Color(color.GetColorValue()[0], 
+                                 color.GetColorValue()[1], 
+                                 color.GetColorValue()[2]);
             }
             return null; // todo handle
         }
@@ -217,6 +216,7 @@ namespace PrickleParser{
             currWord.Baseline = renderInfo.GetBaseline().GetStartPoint().Get(Vector.I2);
             currWord.Descent = renderInfo.GetDescentLine().GetStartPoint().Get(Vector.I2);
             currWord.Ascent = renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2);
+            currWord.SingleWhiteSpaceWidth = renderInfo.GetSingleSpaceWidth();
             flagNewWord = false;
         }
 
