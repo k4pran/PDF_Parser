@@ -9,6 +9,8 @@ namespace PrickleParser{
     public class BookMetrics{
 
         private List<PageMetrics> pages;
+        private float pageMaxWidth;
+        private float pageMaxHeight;
         private int nbPages;
         private string author;
         private string title;
@@ -27,6 +29,14 @@ namespace PrickleParser{
         public void AddPage(PageMetrics page){
             pages.Add(page);
             nbPages++;
+            
+            if (page.Width > pageMaxWidth){
+                pageMaxWidth = page.Width;
+            }
+
+            if (page.Height > pageMaxHeight){
+                pageMaxHeight = page.Height;
+            }
         }
 
         public void ToJson(string output){
@@ -72,9 +82,21 @@ namespace PrickleParser{
             throw new Exception("Input file not found at path: " + input);
         }
 
+        public float LineWidthProportion(LineMetrics line){
+            return line.ContentWidth() / pageMaxWidth;
+        }
+
+        public float LineHeightProportion(LineMetrics line){
+            return line.ContentHeight() / pageMaxHeight;
+        }
+        
         public List<PageMetrics> Pages => pages;
 
         public int NbPages => nbPages;
+
+        public float PageMaxWidth => pageMaxWidth;
+
+        public float PageMaxHeight => pageMaxHeight;
 
         public string Author{
             get => author;
