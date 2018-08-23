@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text;
+using Newtonsoft.Json;
 
 namespace PrickleParser{
     public class Color{
@@ -13,13 +14,35 @@ namespace PrickleParser{
         private float alpha;
         
         public enum ColorFormat{
-            grayscale = 0,
-            rgb       = 1
+            GRAYSCALE = 0,
+            RGB       = 1
+        }
+
+        public string AsHex(){
+            StringBuilder sb = new StringBuilder();
+            sb.Append("#");
+            switch(colorFormat){
+                case ColorFormat.RGB:
+                    sb.Append(red.ToString("X"));
+                    sb.Append(green.ToString("X"));
+                    sb.Append(blue.ToString("X"));
+                    sb.Append(alpha.ToString("X"));
+                    return sb.ToString();
+
+                case ColorFormat.GRAYSCALE:
+
+                    string hexVal = graylevel.ToString("X");
+                    sb.AppendFormat("{0}{1}{2}{3}", hexVal, hexVal, hexVal, alpha);
+                    return sb.ToString();
+                
+                default:
+                    return "#00000000";
+            }
         }
 
         public Color(float graylevel){
             this.graylevel = graylevel;
-            this.colorFormat = ColorFormat.grayscale;
+            this.colorFormat = ColorFormat.GRAYSCALE;
         }
 
         public Color(float red, float green, float blue, float alpha){
@@ -27,7 +50,7 @@ namespace PrickleParser{
             this.green = green;
             this.blue = blue;
             this.alpha = alpha;
-            this.colorFormat = ColorFormat.rgb;
+            this.colorFormat = ColorFormat.RGB;
         }
         
         public Color(float red, float green, float blue){
