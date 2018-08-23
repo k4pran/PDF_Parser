@@ -2,31 +2,38 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Data;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
+using iText.Kernel.Pdf.Colorspace;
 using iText.Kernel.Pdf.Xobject;
 
 namespace PrickleParser{
     public class DeepExtractionStrategy : ITextExtractionStrategy {
         /// used to store the resulting String.
 
-        private PageMetrics pdfPageMetrics;
+        private PageMetrics pageMetrics;
+        private List<CharMetrics> charMetrices;
         
         private StringBuilder result = new StringBuilder();
-        private WordMetrics currWord;
-        private bool flagNewWord = true;
+        private ChunkMetrics currChunk;
 
-        private Vector lastBottomLeft;
-        private Vector lastTopRight;
-        private Vector lastBottomRight;
-    
-        /// store font info.
-        private string lastFont;
-        private float lastFontSize;
-                
+        private Vector bottomLeft;
+        private Vector topLeft;
+        private Vector bottomRight;
+        private Vector topRight;
+        
+        private float ascent;
+        private float baseline;
+        private float descent;
+
+        private bool startOfChunk;
+
+        private float spaceWidth;
+       
         //http://api.itextpdf.com/itext/com/itextpdf/text/pdf/parser/TextRenderInfo.html
         private enum TextRenderMode{
             FillText = 0,
@@ -39,20 +46,20 @@ namespace PrickleParser{
             AddTextToPaddForClipping = 7
         }
 
-        public DeepExtractionStrategy(ref PageMetrics pdfPageMetrics){
-            this.pdfPageMetrics = pdfPageMetrics;
+        public DeepExtractionStrategy(ref PageMetrics pageMetrics){            
+            this.pageMetrics = pageMetrics;
+            this.charMetrices = new List<CharMetrics>();
         }
 
-        public virtual void BeginTextBlock() {
+        public virtual void BeginTextBlock(){
+            if (currChunk == null){
+                StartNewWord();
+            }
+            startOfChunk = true;
         }
     
         public virtual void EndTextBlock() {
-            if (currWord != null){
-                currWord.BottomRight = new Vector3D(lastBottomRight);
-                currWord.TopRight = new Vector3D(lastTopRight);
-                pdfPageMetrics.AddWord(currWord);
-            }
-            result.Append("</span>");
+            StartNewWord();
         }
     
         /// Returns the result so far.
@@ -69,85 +76,88 @@ namespace PrickleParser{
             result.Append(text);
         }
     
-        protected void AppendTextChunk(char text) {
-            result.Append(text);
-        }
-    
         /// Captures text using a simplified algorithm for inserting hard returns and spaces
         ///     @param   renderInfo  render info
-        public virtual void RenderText(TextRenderInfo renderInfo) {
+        public virtual void RenderText(TextRenderInfo renderInfo){
             bool flagNoText = result.Length == 0;
             bool flagNewLine = false;
-            if (flagNoText && renderInfo.GetText().Length > 0){
-                StartNewWord(renderInfo);
+            
+            CharMetrics charMetrics;
+            if (startOfChunk && pageMetrics.ChunkMetrices.Count > 0){
+                charMetrics = new CharMetrics(' ');
+                charMetrics.BottomLeft = new Vector3D(bottomLeft);
+                charMetrics.TopLeft = new Vector3D(topLeft);
+                charMetrics.BottomRight = new Vector3D(renderInfo.GetBaseline().GetStartPoint());
+                charMetrics.TopRight = new Vector3D(renderInfo.GetAscentLine().GetStartPoint());
+                charMetrices.Add(charMetrics);
             }
-           
-            LineSegment baseline = renderInfo.GetBaseline();
-            Vector bottomLeft = baseline.GetStartPoint();
-            Vector bottomRight = baseline.GetEndPoint();
-            Vector topRight = renderInfo.GetAscentLine().GetEndPoint();
+            
+            foreach(TextRenderInfo charInfo in renderInfo.GetCharacterRenderInfos()){
 
+                if (charInfo.GetText().Length == 0){
+                    continue;
+                }
+                charMetrics = new CharMetrics(charInfo.GetText()[0]);
+                charMetrics.FontSize = charInfo.GetFontSize();
+                charMetrics.BottomLeft = new Vector3D(charInfo.GetBaseline().GetStartPoint());
+                charMetrics.TopLeft = new Vector3D(charInfo.GetAscentLine().GetStartPoint());
+                charMetrics.BottomRight = new Vector3D(charInfo.GetBaseline().GetEndPoint());
+                charMetrics.TopRight = new Vector3D(charInfo.GetAscentLine().GetEndPoint());
+                charMetrices.Add(charMetrics);
+            }
+
+            if (startOfChunk){
+                bottomLeft = renderInfo.GetBaseline().GetStartPoint();
+                topLeft = renderInfo.GetAscentLine().GetStartPoint();
+                currChunk.BottomLeft = new Vector3D(bottomLeft);
+                currChunk.TopLeft = new Vector3D(topLeft);
+                baseline = renderInfo.GetBaseline().GetStartPoint().Get(Vector.I2);
+                ascent = renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2);
+                descent = renderInfo.GetDescentLine().GetStartPoint().Get(Vector.I2);
+                spaceWidth = renderInfo.GetSingleSpaceWidth();
+
+                startOfChunk = false;
+            }
+            bottomRight = renderInfo.GetBaseline().GetEndPoint();
+            topRight = renderInfo.GetAscentLine().GetEndPoint();
+            
+            if (flagNoText && renderInfo.GetText().Length > 0){
+                StartNewWord();
+            }
 
             string currFont = renderInfo.GetFont() != null ? renderInfo.GetFont().ToString() : "";
-            if (currWord.FontFamily == null && currFont.Length > 0){
-                currWord.FontFamily = currFont;
+            if (currChunk.FontFamily == null && currFont.Length > 0){
+                currChunk.FontFamily = currFont;
             }
             
             //Check if faux bold is used
             if ((renderInfo.GetTextRenderMode() == (int)TextRenderMode.FillThenStrokeText) || // todo include render mode for outsets etc?
                     renderInfo.GetFont().GetFontProgram().GetFontNames().IsBold()){
-                currWord.Bold = true;
+                currChunk.Bold = true;
             }
-                        
-            
-            Rectangle rect = new Rectangle(bottomLeft.Get(Vector.I1), bottomLeft.Get(Vector.I2), topRight.Get(Vector.I1), topRight.Get(Vector.I2));
-            Single currFontSize = rect.GetHeight();
-            
 
             if (renderInfo.GetFont().GetFontProgram().GetFontMetrics().GetItalicAngle() != 0 ||
                     renderInfo.GetFont().GetFontProgram().GetFontNames().IsItalic()){
-                currWord.Italic = true;
+                currChunk.Italic = true;
             }
             
-            if (currWord.FillColor == null && renderInfo.GetFillColor() != null){
-                currWord.FillColor = ProcessColorInfo(renderInfo.GetFillColor());
+            if (currChunk.FillColor == null && renderInfo.GetFillColor() != null){
+                currChunk.FillColor = ProcessColorInfo(renderInfo.GetFillColor());
             }     
                         
-            if (currWord.StrokeColor == null && renderInfo.GetStrokeColor() != null){
-                currWord.StrokeColor = ProcessColorInfo(renderInfo.GetStrokeColor());
+            if (currChunk.StrokeColor == null && renderInfo.GetStrokeColor() != null){
+                currChunk.StrokeColor = ProcessColorInfo(renderInfo.GetStrokeColor());
             }    
             
-            if (!flagNoText){
-                Vector v = bottomLeft;
-                if ((lastBottomRight.Subtract(lastBottomLeft).Cross(lastBottomLeft.Subtract(v)).LengthSquared()) / (lastBottomRight.Subtract(lastBottomLeft).LengthSquared()) > 1.0){
-                    flagNewLine = true;
-                }
-            }
-
-
-            if (flagNewLine){
-                AppendTextChunk('\n');
-                flagNewWord = true;
-                StartNewWord(renderInfo);
-            }
-            else if (!flagNoText && result[result.Length - 1] == ' ' &&
-                     (renderInfo.GetText().Length > 0 && renderInfo.GetText()[0] != ' ') &&
-                     lastBottomRight.Subtract(bottomLeft).Length() > renderInfo.GetSingleSpaceWidth() / 2.0){
-                AppendTextChunk(' ');
-                StartNewWord(renderInfo);
-            }
-            
             AppendTextChunk(renderInfo.GetText());
-            currWord.Append(renderInfo.GetText());
-            
-            lastBottomLeft = bottomLeft;
-            lastFontSize = currFontSize;
-            lastFont = currFont;
-            lastTopRight = topRight;
-            lastBottomRight = bottomRight;
+            currChunk.Append(renderInfo.GetText());
         }
 
         public Color ProcessColorInfo(iText.Kernel.Colors.Color color){
+            if (color.GetColorSpace() is PdfDeviceCs.Cmyk){
+                color = iText.Kernel.Colors.Color.ConvertCmykToRgb((DeviceCmyk) color);
+            }
+            
             if (color.GetNumberOfComponents() == 1){
                 return new Color((int) color.GetColorValue()[0]); // todo - cast to ints ?
             }
@@ -164,9 +174,7 @@ namespace PrickleParser{
         ///             @see com.itextpdf.text.pdf.parser.RenderListener#renderImage(com.itextpdf.text.pdf.parser.ImageRenderInfo)
         ///             @since 5.0.1
         public virtual void RenderImage(ImageRenderInfo renderInfo){
-            
-            // todo handle seperation color spaces? -- used for printing
-            
+                        
             string path = "/Users/ryan/RiderProjects/IText Play/IText Play/Assets";
             
             try {
@@ -203,21 +211,17 @@ namespace PrickleParser{
         /// Processes and stores a new word with metrics then starts the next word.
         /// </summary>
         /// <param name="renderInfo">Text rendering info</param>
-        private void StartNewWord(TextRenderInfo renderInfo){
-            if (currWord != null){
-                currWord.BottomRight = new Vector3D(lastBottomRight);
-                currWord.TopRight = new Vector3D(lastTopRight);
-                pdfPageMetrics.AddWord(currWord);
+        private void StartNewWord(){
+            if (currChunk != null){
+                currChunk.BottomRight = new Vector3D(bottomRight);
+                currChunk.TopRight = new Vector3D(topRight);
+                currChunk.Ascent = ascent;
+                currChunk.Baseline = baseline;
+                currChunk.Descent = descent;
+                currChunk.SingleWhiteSpaceWidth = spaceWidth;
+                pageMetrics.AddWord(currChunk);
             }
-
-            currWord = new WordMetrics();
-            currWord.BottomLeft = new Vector3D(renderInfo.GetBaseline().GetStartPoint());
-            currWord.TopLeft = new Vector3D(renderInfo.GetAscentLine().GetStartPoint());
-            currWord.Baseline = renderInfo.GetBaseline().GetStartPoint().Get(Vector.I2);
-            currWord.Descent = renderInfo.GetDescentLine().GetStartPoint().Get(Vector.I2);
-            currWord.Ascent = renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2);
-            currWord.SingleWhiteSpaceWidth = renderInfo.GetSingleSpaceWidth();
-            flagNewWord = false;
+            currChunk = new ChunkMetrics();
         }
 
         public void EventOccurred(IEventData data, EventType type){
@@ -252,5 +256,7 @@ namespace PrickleParser{
                 EventType.RENDER_IMAGE
             };
         }
+
+        public List<CharMetrics> CharMetrices => charMetrices;
     }
 }
