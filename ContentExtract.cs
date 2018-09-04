@@ -36,11 +36,10 @@ namespace PrickleParser{
 
                 DeepExtractionStrategy strategy = new DeepExtractionStrategy(ref page);
                 Console.WriteLine("Processing page {0}", i + 1);
-                page.Text = PdfTextExtractor.GetTextFromPage(pdfDoc.GetPage(i + 1), strategy);
-                page.WordMetrices = WordMetrics.FromOrderedChars(strategy.CharMetrices);
+                PdfTextExtractor.GetTextFromPage(pdfDoc.GetPage(i + 1), strategy);
+                page.SortLines();
+                page.WordMetrices = WordMetrics.FromChars(strategy.CharMetrices);
                 page.CharMetrices = strategy.CharMetrices;
-                page.BuildLines();
-                page.DetermineLineSpacing();
                 book.AddPage(page);
             }    
             pdfDoc.Close();
