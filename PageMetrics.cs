@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using iText.Kernel.Geom;
 
 namespace PrickleParser{
     public class PageMetrics{
@@ -27,69 +28,35 @@ namespace PrickleParser{
             text = "";
         }
 
-        public void AddWord(ChunkMetrics chunk){
+        public void SortLines(){
+            lineMetrices.Sort();
+        }
+
+        public void SortChunks(){
+            chunkMetrices.Sort();
+        }
+
+        public void SortWords(){
+            wordMetrices.Sort();
+        }
+
+        public void SortChars(){
+            charMetrices.Sort();
+        }
+
+        public void AddLine(LineMetrics line){
+            lineMetrices.Add(line);
+        }
+
+        public void AddChunk(ChunkMetrics chunk){
             chunkMetrices.Add(chunk);
-        }
-
-        public void BuildLines(){
-            IDictionary<LineMetrics, List<ChunkMetrics>> lineMappings = new Dictionary<LineMetrics, List<ChunkMetrics>>();
-            
-            foreach(ChunkMetrics wordMetric in chunkMetrices){
-                LineMetrics line = new LineMetrics(wordMetric.Ascent, wordMetric.Baseline, wordMetric.Descent);
-                if (lineMappings.ContainsKey(line)){
-                    lineMappings[line].Add(wordMetric);
-                }
-                else{
-                    lineMappings.Add(line, new List<ChunkMetrics>{wordMetric});
-                }
-            }
-            
-            foreach(KeyValuePair<LineMetrics, List<ChunkMetrics>> entry in lineMappings){
-                entry.Key.AddWords(entry.Value);
-                entry.Key.LeftMostPos = entry.Value.ElementAt(0).BottomLeft.X;
-                entry.Key.RightMostPos = entry.Value.ElementAt(entry.Value.Count - 1).BottomRight.X;
-                lineMetrices.Add(entry.Key);
-            }
-        }
-
-        public void DetermineLineSpacing(){
-            if (lineMetrices.Count == 0){
-                avgLineSpacing = -1;
-                return;
-            }
-
-            if (lineMetrices.Count == 1){
-                avgLineSpacing = -1;
-                lineMetrices[0].LineSpacingAbove = -1;
-                lineMetrices[0].LineSpacingBelow = -1;
-                return;
-            }
-            
-            float[] spacings = {};
-
-            float lastDescent = lineMetrices[0].Descent;
-            lineMetrices[0].LineSpacingAbove = -1;
-            for(int i = 1; i < lineMetrices.Count; i++){
-                float spacing = lastDescent - lineMetrices[i].Ascent;
-                lineMetrices[i].LineSpacingAbove = spacing;
-                lineMetrices[i - 1].LineSpacingBelow = spacing;
-                lastDescent = lineMetrices[i].Descent;
-                spacings.Append(spacing);
-            }
-            lineMetrices[lineMetrices.Count - 1].LineSpacingBelow = -1;
-
-            float sum = 0f;
-            for(int i = 0; i < spacings.Length; i++){
-                sum += spacings[i];
-            }
-            avgLineSpacing = sum / spacings.Length;
         }
 
         public void PrintLines(){
             foreach(LineMetrics line in lineMetrices){
                 StringBuilder sb = new StringBuilder();
-                foreach(ChunkMetrics wordMetric in line.WordMetrices){
-                    sb.Append(wordMetric.WordStr);
+                foreach(ChunkMetrics chunkMetric in line.ChunkMetrices){
+                    sb.Append(chunkMetric.ChunkStr);
                     sb.Append(" ");
                 }
                 Console.WriteLine(sb.ToString());
