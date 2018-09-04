@@ -1,5 +1,7 @@
-﻿namespace PrickleParser{
-    public class CharMetrics{
+﻿using System;
+
+namespace PrickleParser{
+    public class CharMetrics : IComparable<CharMetrics>{
         private char c;
 
         private float fontSize;
@@ -38,6 +40,27 @@
         public Vector3D BottomRight{
             get => bottomRight;
             set => bottomRight = value;
+        }
+        
+        public int CompareTo(CharMetrics other){
+            if (other == null || other.TopLeft == null || other.BottomRight == null ||
+                topLeft == null || bottomRight == null){
+                throw new Exception("Invalid comparison"); // todo
+            }
+
+            if (bottomLeft.Y > other.BottomLeft.Y){
+                return -1;
+            }
+            if (bottomLeft.Y < other.BottomLeft.Y){
+                return 1;
+            }
+            if (bottomLeft.X < other.BottomLeft.X){
+                return -1;
+            }
+            if (bottomLeft.X > other.BottomLeft.X){
+                return 1;
+            }
+            return 1;
         }
     }
 }
