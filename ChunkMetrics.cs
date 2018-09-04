@@ -12,6 +12,7 @@ namespace PrickleParser{
         private bool underline;
         private bool subscript;
         private bool superscript;
+        private bool additionalSpacing;
         
         private Color fillColor;
         private Color strokeColor;
@@ -32,6 +33,7 @@ namespace PrickleParser{
         
         public ChunkMetrics(){
             chunkSb = new StringBuilder();
+            chunkStr = "";
             bold = false;
             italic = false;
 
@@ -59,7 +61,7 @@ namespace PrickleParser{
             return ascent - descent;
         }
 
-        public string WordStr{
+        public string ChunkStr{
             get => chunkStr;
             set => chunkStr = value;
         }
@@ -92,6 +94,11 @@ namespace PrickleParser{
         public bool Superscript{
             get => superscript;
             set => superscript = value;
+        }
+
+        public bool AdditionalSpacing{
+            get => additionalSpacing;
+            set => additionalSpacing = value;
         }
 
         public Color FillColor{
@@ -150,11 +157,11 @@ namespace PrickleParser{
         }
         
         public override string ToString(){
-            return chunkSb.ToString();
+            return chunkStr;
         }
 
         public int CompareTo(ChunkMetrics other){
-            if (other == null || other.topLeft == null || other.bottomRight == null ||
+            if (other == null || other.TopLeft == null || other.BottomRight == null ||
                 topLeft == null || bottomRight == null){
                 throw new Exception("Invalid comparison"); // todo
             }
@@ -165,10 +172,10 @@ namespace PrickleParser{
             if (baseline < other.baseline){
                 return 1;
             }
-            if (BottomLeft.X < other.bottomLeft.X){
+            if (bottomLeft.X < other.BottomLeft.X){
                 return -1;
             }
-            if (bottomLeft.X > other.bottomLeft.X){
+            if (bottomLeft.X > other.BottomLeft.X){
                 return 1;
             }
             return 1;
