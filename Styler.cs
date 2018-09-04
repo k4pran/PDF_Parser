@@ -5,8 +5,8 @@ namespace PrickleParser{
     public class Styler{
         
         public static void StyleWord(ChunkMetrics chunkMetric, bool openOnly = false){
-            string tmp = chunkMetric.WordStr;
-            chunkMetric.WordStr = "";
+            string tmp = chunkMetric.ChunkStr;
+            chunkMetric.ChunkStr = "";
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat("<font=\"{0}\"><size={1}>", chunkMetric.FontFamily, chunkMetric.GetFontSize());
 
@@ -63,7 +63,7 @@ namespace PrickleParser{
             }
             
             sb.Append("</font>");
-            chunkMetric.WordStr = tmp;
+            chunkMetric.ChunkStr = tmp;
         }
 
         /// <summary>
@@ -73,21 +73,21 @@ namespace PrickleParser{
         /// <param name="line"></param>
         public static void StyleLine(LineMetrics line){
             StringBuilder sb = new StringBuilder();
-            ChunkMetrics prev = line.WordMetrices.ElementAt(0);
+            ChunkMetrics prev = line.ChunkMetrices.ElementAt(0);
             StyleWord(prev, true);
 
-            for(int i = 1; i < line.WordMetrices.Count; i++){
+            for(int i = 1; i < line.ChunkMetrices.Count; i++){
                 StringBuilder closeTags = new StringBuilder();
                 
-                if (line.WordMetrices.ElementAt(i).FontFamily != prev.FontFamily){
+                if (line.ChunkMetrices.ElementAt(i).FontFamily != prev.FontFamily){
                     
                 }
                 
-                if (line.WordMetrices.ElementAt(i).GetFontSize() != prev.GetFontSize()){
+                if (line.ChunkMetrices.ElementAt(i).GetFontSize() != prev.GetFontSize()){
                     
                 }
 
-                if (line.WordMetrices.ElementAt(i).Bold){
+                if (line.ChunkMetrices.ElementAt(i).Bold){
                     if (!prev.Bold){
                         sb.Append("<b>");
                     }
@@ -98,32 +98,32 @@ namespace PrickleParser{
                     }
                 }
                 
-                if (line.WordMetrices.ElementAt(i).Italic){
+                if (line.ChunkMetrices.ElementAt(i).Italic){
                     
                 }
 
                 // The bottom four decorating will be less common and so added word by word
-                if (line.WordMetrices.ElementAt(i).Strikethrough){
+                if (line.ChunkMetrices.ElementAt(i).Strikethrough){
                     sb.Append("<s>");
                     closeTags.Append("</s>");
                 }
 
-                if (line.WordMetrices.ElementAt(i).Underline){
+                if (line.ChunkMetrices.ElementAt(i).Underline){
                     sb.Append("<u>");
                     closeTags.Append("</u>");
                 }
 
-                if (line.WordMetrices.ElementAt(i).Superscript){
+                if (line.ChunkMetrices.ElementAt(i).Superscript){
                     sb.Append("<sup>");
                     closeTags.Append("</sup");
                 }
 
-                if (line.WordMetrices.ElementAt(i).Subscript){
+                if (line.ChunkMetrices.ElementAt(i).Subscript){
                     sb.Append("<sub>");
                     closeTags.Append("</sub>");
                 }
                 
-                sb.Append(line.WordMetrices.ElementAt(i));
+                sb.Append(line.ChunkMetrices.ElementAt(i));
                 sb.Append(closeTags);
             }
         }
