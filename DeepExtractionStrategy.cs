@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
@@ -19,6 +20,7 @@ namespace PrickleParser{
         private List<CharMetrics> charMetrices;
         
         private StringBuilder result = new StringBuilder();
+        private LineMetrics currLine;
         private ChunkMetrics currChunk;
 
         private Vector bottomLeft;
@@ -31,6 +33,9 @@ namespace PrickleParser{
         private float descent;
 
         private bool startOfChunk;
+        private bool startOfNewline;
+
+        private float widthSpaceFromLastChunk;
 
         private float spaceWidth;
        
@@ -48,7 +53,9 @@ namespace PrickleParser{
 
         public DeepExtractionStrategy(ref PageMetrics pageMetrics){            
             this.pageMetrics = pageMetrics;
-            this.charMetrices = new List<CharMetrics>();
+            charMetrices = new List<CharMetrics>();
+            startOfNewline = true;
+            descent = pageMetrics.Height;
         }
 
         public virtual void BeginTextBlock(){
@@ -68,36 +75,45 @@ namespace PrickleParser{
           return result.ToString();
         }
     
-        /// Used to actually append text to the text results.  Subclasses can use this to insert
-        ///     text that wouldn't normally be included in text parsing (e.g. result of OCR performed against
-        ///     image content)
-        ///     @param text the text to append to the text results accumulated so far
-        protected void AppendTextChunk(string text) {
-            result.Append(text);
-        }
-    
         /// Captures text using a simplified algorithm for inserting hard returns and spaces
         ///     @param   renderInfo  render info
         public virtual void RenderText(TextRenderInfo renderInfo){
-            bool flagNoText = result.Length == 0;
-            bool flagNewLine = false;
+
+            string text = renderInfo.GetText().Replace('\t', ' ');
             
-            CharMetrics charMetrics;
-            if (startOfChunk && pageMetrics.ChunkMetrices.Count > 0){
-                charMetrics = new CharMetrics(' ');
-                charMetrics.BottomLeft = new Vector3D(bottomLeft);
-                charMetrics.TopLeft = new Vector3D(topLeft);
-                charMetrics.BottomRight = new Vector3D(renderInfo.GetBaseline().GetStartPoint());
-                charMetrics.TopRight = new Vector3D(renderInfo.GetAscentLine().GetStartPoint());
-                charMetrices.Add(charMetrics);
+
+            if (renderInfo.GetBaseline().GetStartPoint().Get(Vector.I2) != baseline &&
+                renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2) != ascent){
+                startOfNewline = true;
+            }
+
+            if (startOfNewline){
+                if (currLine != null){
+                    currLine.RightMostPos = bottomRight.Get(Vector.I1);
+                    currLine.LineSpacingBelow =
+                        currLine.Descent - renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2);
+                    pageMetrics.AddLine(currLine);
+                }
+                
+                currLine = new LineMetrics();
+                currLine.Ascent = renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2);
+                currLine.Descent = renderInfo.GetDescentLine().GetStartPoint().Get(Vector.I2);
+                currLine.Baseline = renderInfo.GetBaseline().GetStartPoint().Get(Vector.I2);
+                currLine.LeftMostPos = renderInfo.GetBaseline().GetStartPoint().Get(Vector.I1);
+                currLine.LineSpacingAbove = descent - currLine.Ascent;
+                
+                startOfNewline = false;
             }
             
+            CharMetrics charMetrics;
             foreach(TextRenderInfo charInfo in renderInfo.GetCharacterRenderInfos()){
 
                 if (charInfo.GetText().Length == 0){
                     continue;
                 }
-                charMetrics = new CharMetrics(charInfo.GetText()[0]);
+
+                char c = charInfo.GetText()[0] == '\t' ? ' ' : charInfo.GetText()[0];
+                charMetrics = new CharMetrics(c);
                 charMetrics.FontSize = charInfo.GetFontSize();
                 charMetrics.BottomLeft = new Vector3D(charInfo.GetBaseline().GetStartPoint());
                 charMetrics.TopLeft = new Vector3D(charInfo.GetAscentLine().GetStartPoint());
@@ -107,6 +123,15 @@ namespace PrickleParser{
             }
 
             if (startOfChunk){
+
+                if (currLine.Baseline == baseline){
+                    float horSpacing = Math.Abs(
+                        bottomRight.Get(Vector.I1) - renderInfo.GetBaseline().GetStartPoint().Get(Vector.I1));
+                    if (horSpacing > spaceWidth){
+                        Console.Write("");
+                    }
+                }
+                
                 bottomLeft = renderInfo.GetBaseline().GetStartPoint();
                 topLeft = renderInfo.GetAscentLine().GetStartPoint();
                 currChunk.BottomLeft = new Vector3D(bottomLeft);
@@ -115,16 +140,13 @@ namespace PrickleParser{
                 ascent = renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2);
                 descent = renderInfo.GetDescentLine().GetStartPoint().Get(Vector.I2);
                 spaceWidth = renderInfo.GetSingleSpaceWidth();
-
+                                                
                 startOfChunk = false;
             }
+            
             bottomRight = renderInfo.GetBaseline().GetEndPoint();
             topRight = renderInfo.GetAscentLine().GetEndPoint();
             
-            if (flagNoText && renderInfo.GetText().Length > 0){
-                StartNewWord();
-            }
-
             string currFont = renderInfo.GetFont() != null ? renderInfo.GetFont().ToString() : "";
             if (currChunk.FontFamily == null && currFont.Length > 0){
                 currChunk.FontFamily = currFont;
@@ -149,8 +171,7 @@ namespace PrickleParser{
                 currChunk.StrokeColor = ProcessColorInfo(renderInfo.GetStrokeColor());
             }    
             
-            AppendTextChunk(renderInfo.GetText());
-            currChunk.Append(renderInfo.GetText());
+            currChunk.Append(text);
         }
 
         public Color ProcessColorInfo(iText.Kernel.Colors.Color color){
@@ -159,7 +180,7 @@ namespace PrickleParser{
             }
             
             if (color.GetNumberOfComponents() == 1){
-                return new Color((int) color.GetColorValue()[0]); // todo - cast to ints ?
+                return new Color((int) color.GetColorValue()[0]);
             }
                 
             if (color.GetNumberOfComponents() == 3){
@@ -219,7 +240,8 @@ namespace PrickleParser{
                 currChunk.Baseline = baseline;
                 currChunk.Descent = descent;
                 currChunk.SingleWhiteSpaceWidth = spaceWidth;
-                pageMetrics.AddWord(currChunk);
+                currLine.AddChunk(currChunk);
+                pageMetrics.AddChunk(currChunk);
             }
             currChunk = new ChunkMetrics();
         }
