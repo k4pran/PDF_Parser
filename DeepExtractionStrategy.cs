@@ -78,6 +78,8 @@ namespace PrickleParser{
         /// Captures text using a simplified algorithm for inserting hard returns and spaces
         ///     @param   renderInfo  render info
         public virtual void RenderText(TextRenderInfo renderInfo){
+            
+            // todo handle adding last line
 
             string text = renderInfo.GetText().Replace('\t', ' ');
             
@@ -89,13 +91,17 @@ namespace PrickleParser{
 
             if (startOfNewline){
                 if (currLine != null){
+                    if (currChunk.ChunkStr.Length > 0){
+                        StartNewWord();
+                        startOfChunk = true;
+                    }
                     currLine.RightMostPos = bottomRight.Get(Vector.I1);
                     currLine.LineSpacingBelow =
                         currLine.Descent - renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2);
-                    pageMetrics.AddLine(currLine);
                 }
                 
                 currLine = new LineMetrics();
+                pageMetrics.AddLine(currLine);
                 currLine.Ascent = renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2);
                 currLine.Descent = renderInfo.GetDescentLine().GetStartPoint().Get(Vector.I2);
                 currLine.Baseline = renderInfo.GetBaseline().GetStartPoint().Get(Vector.I2);
@@ -106,6 +112,23 @@ namespace PrickleParser{
             }
             
             CharMetrics charMetrics;
+            
+            // Check if there is space char required between chunks
+            if (GetResultantText().Length > 0 &&
+                IsSpaceRequired(renderInfo.GetBaseline().GetStartPoint().Get(Vector.I1), 
+                bottomRight.Get(Vector.I1), 
+                renderInfo.GetBaseline().GetStartPoint().Get(Vector.I2), 
+                renderInfo.GetSingleSpaceWidth())){
+
+                charMetrics = new CharMetrics(' ');
+                charMetrics.BottomLeft = new Vector3D(bottomLeft);
+                charMetrics.TopLeft = new Vector3D(topLeft);
+                charMetrics.BottomRight = new Vector3D(renderInfo.GetBaseline().GetStartPoint());
+                charMetrics.TopRight = new Vector3D(renderInfo.GetAscentLine().GetStartPoint());
+                this.charMetrices.Add(charMetrics);
+                text = " " + text; // todo extra spacing? e.g. handle if it is 4x singlespace width
+            }
+            
             foreach(TextRenderInfo charInfo in renderInfo.GetCharacterRenderInfos()){
 
                 if (charInfo.GetText().Length == 0){
@@ -172,6 +195,7 @@ namespace PrickleParser{
             }    
             
             currChunk.Append(text);
+            result.Append(text); // todo include newlines
         }
 
         public Color ProcessColorInfo(iText.Kernel.Colors.Color color){
@@ -191,12 +215,41 @@ namespace PrickleParser{
             return null; // todo handle
         }
 
+        public bool IsSpaceRequired(float currChunkLeftPos, float currChunkRightPos, float currChunkBaseline, float singleSpaceWidth){
+            if (Utils.FloatsNearlyEqual(currChunkLeftPos - currChunkRightPos, singleSpaceWidth / 2, 0.001f) ||
+            (currChunkLeftPos - currChunkRightPos) > (singleSpaceWidth / 2)){
+                if (Utils.FloatsNearlyEqual(currChunkBaseline, baseline, 2)){
+                    Console.Write("");
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        /// <summary>
+        /// Processes and stores a new word with metrics then starts the next word.
+        /// </summary>
+        /// <param name="renderInfo">Text rendering info</param>
+        private void StartNewWord(){
+            if (currChunk != null){
+                currChunk.BottomRight = new Vector3D(bottomRight);
+                currChunk.TopRight = new Vector3D(topRight);
+                currChunk.Ascent = ascent;
+                currChunk.Baseline = baseline;
+                currChunk.Descent = descent;
+                currChunk.SingleWhiteSpaceWidth = spaceWidth;
+                currLine.AddChunk(currChunk);
+                pageMetrics.AddChunk(currChunk);
+            }
+            currChunk = new ChunkMetrics();
+        }
+
         /// no-op method - this renderer isn't interested in image events
         ///             @see com.itextpdf.text.pdf.parser.RenderListener#renderImage(com.itextpdf.text.pdf.parser.ImageRenderInfo)
         ///             @since 5.0.1
         public virtual void RenderImage(ImageRenderInfo renderInfo){
                         
-            string path = "/Users/ryan/RiderProjects/IText Play/IText Play/Assets";
+            string path = "/Users/ryan/RiderProjects/Sharpen Pdf Parser/Sharpen Pdf Parser/image_dump";
             
             try {
                 String filename;
@@ -204,7 +257,7 @@ namespace PrickleParser{
                 PdfImageXObject imageObj;
                 imageObj = renderInfo.GetImage();
                 
-                if (imageObj == null || !imageObj.GetPdfObject().ContainsKey(PdfName.BitsPerComponent)) return;
+                if (imageObj == null) return;
 
                 float width = imageObj.GetWidth();
                 float height = imageObj.GetHeight();
@@ -223,27 +276,9 @@ namespace PrickleParser{
                 os.Write(imageObj.GetImageBytes(), 0 , imageObj.GetImageBytes().Length);
                 os.Flush();
                 os.Close();
-            } catch (iText.IO.IOException e) {
+            } catch (Exception e) {
                 Console.WriteLine(e.GetBaseException());
             }
-        }
-
-        /// <summary>
-        /// Processes and stores a new word with metrics then starts the next word.
-        /// </summary>
-        /// <param name="renderInfo">Text rendering info</param>
-        private void StartNewWord(){
-            if (currChunk != null){
-                currChunk.BottomRight = new Vector3D(bottomRight);
-                currChunk.TopRight = new Vector3D(topRight);
-                currChunk.Ascent = ascent;
-                currChunk.Baseline = baseline;
-                currChunk.Descent = descent;
-                currChunk.SingleWhiteSpaceWidth = spaceWidth;
-                currLine.AddChunk(currChunk);
-                pageMetrics.AddChunk(currChunk);
-            }
-            currChunk = new ChunkMetrics();
         }
 
         public void EventOccurred(IEventData data, EventType type){
