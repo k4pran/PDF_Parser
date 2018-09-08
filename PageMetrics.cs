@@ -12,6 +12,10 @@ namespace PrickleParser{
         private List<ChunkMetrics> chunkMetrices;
         private List<WordMetrics> wordMetrices;
         private List<CharMetrics> charMetrices;
+        
+        private List<ImageMetrics> imageMetrices;
+        private bool errorLoadingImages = false;         
+        
         private string text;
         private float width;
         private float height;
@@ -24,6 +28,7 @@ namespace PrickleParser{
             chunkMetrices = new List<ChunkMetrics>();
             wordMetrices = new List<WordMetrics>();
             charMetrices = new List<CharMetrics>();
+            imageMetrices = new List<ImageMetrics>();
             
             text = "";
         }
@@ -91,6 +96,16 @@ namespace PrickleParser{
         public List<CharMetrics> CharMetrices{
             get => charMetrices;
             set => charMetrices = value;
+        }
+
+        public List<ImageMetrics> ImageMetrices{
+            get => imageMetrices;
+            set => imageMetrices = value;
+        }
+
+        public bool ErrorLoadingImages{
+            get => errorLoadingImages;
+            set => errorLoadingImages = value;
         }
 
         public float Width{
