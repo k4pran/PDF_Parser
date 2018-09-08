@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
-using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Data;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
@@ -83,9 +82,8 @@ namespace PrickleParser{
 
             string text = renderInfo.GetText().Replace('\t', ' ');
             
-
-            if (renderInfo.GetBaseline().GetStartPoint().Get(Vector.I2) != baseline &&
-                renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2) != ascent){
+            if (!Utils.FloatsNearlyEqual(renderInfo.GetBaseline().GetStartPoint().Get(Vector.I2), baseline, 0.01f) &&
+                !Utils.FloatsNearlyEqual(renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2), ascent, 0.01f)){
                 startOfNewline = true;
             }
 
@@ -99,7 +97,7 @@ namespace PrickleParser{
                     currLine.LineSpacingBelow =
                         currLine.Descent - renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2);
                 }
-                
+
                 currLine = new LineMetrics();
                 pageMetrics.AddLine(currLine);
                 currLine.Ascent = renderInfo.GetAscentLine().GetStartPoint().Get(Vector.I2);
@@ -112,13 +110,11 @@ namespace PrickleParser{
             }
             
             CharMetrics charMetrics;
-            
             // Check if there is space char required between chunks
             if (GetResultantText().Length > 0 &&
-                IsSpaceRequired(renderInfo.GetBaseline().GetStartPoint().Get(Vector.I1), 
-                bottomRight.Get(Vector.I1), 
+                IsSpaceRequired(bottomRight.Get(Vector.I1), renderInfo.GetBaseline().GetStartPoint().Get(Vector.I1),
                 renderInfo.GetBaseline().GetStartPoint().Get(Vector.I2), 
-                renderInfo.GetSingleSpaceWidth())){
+                renderInfo.GetSingleSpaceWidth())){ // todo switch order
 
                 charMetrics = new CharMetrics(' ');
                 charMetrics.BottomLeft = new Vector3D(bottomLeft);
@@ -128,11 +124,26 @@ namespace PrickleParser{
                 this.charMetrices.Add(charMetrics);
                 text = " " + text; // todo extra spacing? e.g. handle if it is 4x singlespace width
             }
-            
+
+            TextRenderInfo lastChar = null;
+            int charInd = 0;
             foreach(TextRenderInfo charInfo in renderInfo.GetCharacterRenderInfos()){
 
                 if (charInfo.GetText().Length == 0){
                     continue;
+                }
+
+                if (lastChar != null && IsSpaceRequired(lastChar.GetBaseline().GetEndPoint().Get(Vector.I1), 
+                                                        charInfo.GetBaseline().GetStartPoint().Get(Vector.I1),
+                                                        renderInfo.GetSingleSpaceWidth())){
+                    charMetrics = new CharMetrics(' ');
+                    charMetrics.FontSize = charInfo.GetFontSize();
+                    charMetrics.BottomLeft = new Vector3D(lastChar.GetBaseline().GetEndPoint());
+                    charMetrics.TopLeft = new Vector3D(lastChar.GetAscentLine().GetEndPoint());
+                    charMetrics.BottomRight = new Vector3D(charInfo.GetBaseline().GetStartPoint());
+                    charMetrics.TopRight = new Vector3D(charInfo.GetAscentLine().GetStartPoint());
+                    charMetrices.Add(charMetrics);
+                    text = text.Insert(charInd + 1, " ");
                 }
 
                 char c = charInfo.GetText()[0] == '\t' ? ' ' : charInfo.GetText()[0];
@@ -143,11 +154,14 @@ namespace PrickleParser{
                 charMetrics.BottomRight = new Vector3D(charInfo.GetBaseline().GetEndPoint());
                 charMetrics.TopRight = new Vector3D(charInfo.GetAscentLine().GetEndPoint());
                 charMetrices.Add(charMetrics);
+
+                lastChar = charInfo;
+                charInd++;
             }
 
             if (startOfChunk){
 
-                if (currLine.Baseline == baseline){
+                if (Utils.FloatsNearlyEqual(currLine.Baseline, baseline, 0.001f)){
                     float horSpacing = Math.Abs(
                         bottomRight.Get(Vector.I1) - renderInfo.GetBaseline().GetStartPoint().Get(Vector.I1));
                     if (horSpacing > spaceWidth){
@@ -181,7 +195,7 @@ namespace PrickleParser{
                 currChunk.Bold = true;
             }
 
-            if (renderInfo.GetFont().GetFontProgram().GetFontMetrics().GetItalicAngle() != 0 ||
+            if (!(Utils.FloatsNearlyEqual(renderInfo.GetFont().GetFontProgram().GetFontMetrics().GetItalicAngle(), 0, 0.001f)) ||
                     renderInfo.GetFont().GetFontProgram().GetFontNames().IsItalic()){
                 currChunk.Italic = true;
             }
@@ -215,11 +229,16 @@ namespace PrickleParser{
             return null; // todo handle
         }
 
-        public bool IsSpaceRequired(float currChunkLeftPos, float currChunkRightPos, float currChunkBaseline, float singleSpaceWidth){
-            if (Utils.FloatsNearlyEqual(currChunkLeftPos - currChunkRightPos, singleSpaceWidth / 2, 0.001f) ||
-            (currChunkLeftPos - currChunkRightPos) > (singleSpaceWidth / 2)){
-                if (Utils.FloatsNearlyEqual(currChunkBaseline, baseline, 2)){
-                    Console.Write("");
+        // todo better option for determining space as spaceWidth is not always accurate
+        public bool IsSpaceRequired(float left, float right, float spaceWidth){
+            return Utils.FloatsNearlyEqual(right - left, spaceWidth / 2, 0.001f) || 
+                    right - left > spaceWidth / 3;
+        }
+
+        public bool IsSpaceRequired(float left, float right, float currChunkBaseline, float spaceWidth){
+            if (Utils.FloatsNearlyEqual(left - right, spaceWidth / 2, 0.001f) ||
+            right - left > spaceWidth / 3){
+                if (Utils.FloatsNearlyEqual(currChunkBaseline, baseline, 0.001f)){
                     return true;
                 }
             }
@@ -278,6 +297,7 @@ namespace PrickleParser{
                 os.Close();
             } catch (Exception e) {
                 Console.WriteLine(e.GetBaseException());
+                pageMetrics.ErrorLoadingImages = true;
             }
         }
 
