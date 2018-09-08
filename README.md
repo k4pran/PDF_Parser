@@ -6,3 +6,4 @@ lines, chunks, words and chars. Each contain various metrics such as locations, 
 ### Progress:
   - [ ] Handle edge cases for determining where space characters should be inserted
   - [ ] Handle images better as many images are not being extracted correctly by IText
+  - [ ] Add usage examples / tests
